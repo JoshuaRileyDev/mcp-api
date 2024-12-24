@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Chat Client</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        #chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: 20%;
+        }
+        .assistant-message {
+            background-color: #e9ecef;
+            margin-right: 20%;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .typing-indicator {
+            display: none;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        #tool-executions {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .tool-execution {
+            margin: 5px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .tool-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .tool-result pre {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .tool-error {
+            color: #dc3545;
+            margin-top: 5px;
+        }
+
+        .tool-result-text {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .tool-result-file {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .tool-result-list {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .tool-result-item {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .tool-result {
+            margin: 8px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .tool-result pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .tool-result-text {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.5;
+            margin: 4px 0;
+        }
+
+        .tool-result-file {
+            padding: 4px 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-family: monospace;
+        }
+
+        .tool-result-list {
+            font-family: monospace;
+        }
+
+        .tool-result-item {
+            padding: 2px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tool-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 4px 0;
+        }
+
+        .tool-execution {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            user-select: none;
+        }
+
+        .collapsible:hover {
+            background: #e9ecef;
+        }
+
+        .collapse-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            transition: max-height 0.3s ease-out;
+            max-height: 1000px;
+            overflow: hidden;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+        }
+
+        #tool-executions {
+            margin: 10px 0;
+            display: none;
+        }
+
+        #tool-executions.has-executions {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>MCP Chat Client</h1>
+        <div id="chat-messages"></div>
+        <div id="tool-executions">
+            <div class="collapsible">
+                <span>Tool Executions</span>
+                <span class="collapse-icon">▼</span>
+            </div>
+            <div class="collapsible-content"></div>
+        </div>
+        <div class="typing-indicator" id="typing-indicator">AI is typing...</div>
+        <div class="input-container">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messagesDiv = document.getElementById('chat-messages');
+        const toolExecutionsDiv = document.getElementById('tool-executions');
+        const messageInput = document.getElementById('message-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+        let currentMessageDiv = null;
+
+        const collapsibleContent = toolExecutionsDiv.querySelector('.collapsible-content');
+        const collapsible = toolExecutionsDiv.querySelector('.collapsible');
+
+        collapsible.addEventListener('click', () => {
+            collapsible.classList.toggle('collapsed');
+            collapsibleContent.classList.toggle('collapsed');
+        });
+
+        function formatToolStatus(status) {
+            const colors = {
+                initializing: '#ffd700',
+                preparing: '#ffa500',
+                running: '#1e90ff',
+                completed: '#32cd32',
+                error: '#ff4500'
+            };
+            return `<span style="color: ${colors[status] || '#666'}">${status}</span>`;
+        }
+
+        function formatToolResult(result) {
+            try {
+                // If result is a string, try to parse it as JSON
+                const parsed = typeof result === 'string' ? JSON.parse(result) : result
+                
+                // Handle content array format
+                if (Array.isArray(parsed.content)) {
+                    return parsed.content.map(item => {
+                        if (item.type === 'text') {
+                            return `<div class="tool-result-text">${item.text}</div>`
+                        }
+                        if (item.type === 'file') {
+                            return `<div class="tool-result-file">📄 ${item.path}</div>`
+                        }
+                        return `<pre>${JSON.stringify(item, null, 2)}</pre>`
+                    }).join('')
+                }
+                
+                // Handle directory listing format
+                if (typeof parsed === 'string' && parsed.includes('\n')) {
+                    return `<div class="tool-result-list">${parsed.split('\n').map(line => 
+                        `<div class="tool-result-item">${line}</div>`
+                    ).join('')}</div>`
+                }
+                
+                // Default to pretty-printed JSON
+                return `<pre>${JSON.stringify(parsed, null, 2)}</pre>`
+            } catch (e) {
+                // If parsing fails, return as plain text
+                return `<div class="tool-result-text">${result}</div>`
+            }
+        }
+
+        function updateToolExecutions(executions) {
+            if (executions.length > 0) {
+                toolExecutionsDiv.classList.add('has-executions');
+                collapsibleContent.innerHTML = executions.map(([id, tool]) => `
+                    <div class="tool-execution">
+                        <div class="tool-header">
+                            ${tool.name} ${formatToolStatus(tool.status)}
+                        </div>
+                        ${tool.result ? `
+                            <div class="tool-result">
+                                ${formatToolResult(tool.result)}
+                            </div>
+                        ` : ''}
+                        ${tool.error ? `
+                            <div class="tool-error">
+                                Error: ${tool.error}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+                // Ensure panel is expanded when new executions arrive
+                collapsible.classList.remove('collapsed');
+                collapsibleContent.classList.remove('collapsed');
+            } else {
+                toolExecutionsDiv.classList.remove('has-executions');
+            }
+        }
+
+        function updateMessages(messages) {
+            messagesDiv.innerHTML = messages.map(msg => `
+                <div class="message ${msg.role}-message">
+                    ${msg.content || (msg.tool_calls ? 'Using tool: ' + msg.tool_calls[0].function.name : '')}
+                </div>
+            `).join('');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function appendMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
+            messageDiv.textContent = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return messageDiv;
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                appendMessage(message, true);
+                socket.emit('chat message', message);
+                messageInput.value = '';
+                typingIndicator.style.display = 'block';
+                currentMessageDiv = null;
+            }
+        }
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        socket.on('stream_content', (content) => {
+            if (!currentMessageDiv) {
+                currentMessageDiv = document.createElement('div');
+                currentMessageDiv.className = 'message assistant-message';
+                messagesDiv.appendChild(currentMessageDiv);
+            }
+            currentMessageDiv.textContent += content;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        socket.on('tool_status', updateToolExecutions);
+        socket.on('update_messages', updateMessages);
+        socket.on('response_complete', () => {
+            typingIndicator.style.display = 'none';
+            currentMessageDiv = null;
+        });
+
+        socket.on('error', (error) => {
+            appendMessage(`Error: ${error}`, false);
+            typingIndicator.style.display = 'none';
+        });
+    </script>
+</body>
+</html> 
