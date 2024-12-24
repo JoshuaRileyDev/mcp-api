@@ -24,6 +24,7 @@ Clone the repository and then run the follow command:
 
     npm i && npm run dev
 
+Rename .env.example file to .env and update the environment variable to be the full local path to your MCP config.json file
   
 
 ## Usage
